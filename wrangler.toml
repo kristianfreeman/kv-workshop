@@ -1,0 +1,8 @@
+name = "wm-workshop"
+main = "src/index.js"
+compatibility_date = "2022-07-24"
+
+[[kv_namespaces]]
+  binding = "TODOS"
+  id = "b631ea7c7ad64823b2d62cc471e15976"
+  preview_id = "b631ea7c7ad64823b2d62cc471e15976"

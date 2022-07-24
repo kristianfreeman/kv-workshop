@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css">
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    ul { padding: 0; }
+    li { list-style: none; }
+  </style>
+</head>
+
+<body>
+  <main id="app">
+    <h1>Todos App</h1>
+
+    <form @submit.prevent="addNewTodo">
+      <input type="text" required="true" placeholder="New todo" v-model="newTodo" />
+      <input type="submit" />
+    </form>
+
+    <ul>
+      <li v-for="{id, completed, text} in todos" :index="id">
+        <input type="checkbox" @change="completeTodo" :checked="completed" />
+        {{text}}
+      </li>
+    </ul>
+  </main>
+
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          todos: null,
+          newTodo: ""
+        }
+      },
+      async created() {
+        const resp = await fetch("/todos")
+        const todos = await resp.json()
+        this.todos = todos
+      },
+      methods: {
+        async addNewTodo(event) {
+          const todos = [].concat(this.todos, {
+            text: this.newTodo,
+            id: this.todos.length + 1,
+            completed: false
+          })
+
+          await fetch("/todos", {
+            method: 'PUT',
+            body: JSON.stringify(todos),
+            headers: { 'Content-type': 'application/json' }
+          })
+
+          this.newTodo = ""
+          this.todos = todos
+        },
+
+        async completeTodo(event) {
+          const parent = event.target.parentElement
+          const { index } = parent.attributes
+          const id = index.value
+          
+          const todos = this.todos
+          const todoToUpdate = todos.find(todo => todo.id == id)
+          todoToUpdate.completed = !todoToUpdate.completed
+
+          await fetch("/todos", {
+            method: 'PUT',
+            body: JSON.stringify(todos),
+            headers: { 'Content-type': 'application/json' }
+          })
+        }
+      }
+    }).mount("#app")
+  </script>
+</body>
+
+</html>

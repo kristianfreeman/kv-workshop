@@ -1,49 +1,24 @@
+import { Hono } from 'hono'
 import template from './template.html'
 
-const html = () => {
-  return new Response(template, {
-    headers: { 'Content-type': 'text/html' }
-  })
-}
+const app = new Hono()
 
-const todos = async (request, env) => {
-  switch (request.method) {
-    case 'PUT':
-      const newTodos = await request.json()
-      await env.TODOS.put("todos", JSON.stringify(newTodos))
-      return new Response(JSON.stringify(newTodos), {
-        headers: { 'Content-type': 'application/json' }
-      })
-    case 'GET':
-      const todosArray = await env.TODOS.get("todos", "json") || []
-      return new Response(JSON.stringify(todosArray), {
-        headers: { 'Content-type': 'application/json' }
-      })
-    default:
-      return new Response("Method not allowed", {
-        statusCode: 405
-      })
-  }
-}
+app.get('/', c => c.html(template))
 
-const notFound = () => {
-  return new Response("Not found", {
-    statusCode: 404
-  })
-}
+app.get('/todos', async c => {
+  const todosArray = await c.env.TODOS.get("todos", "json") || []
+  return c.json(todosArray)
+})
 
+app.put('/todos', async c => {
+  const newTodos = await c.req.json()
+  await c.env.TODOS.put("todos", JSON.stringify(newTodos))
+  return c.json(newTodos)
+})
 
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url)
+app.all('*', c => {
+  c.status(404)
+  return c.text("Not found")
+})
 
-    switch (url.pathname) {
-      case '/':
-        return html()
-      case '/todos':
-        return todos(request, env)
-      default:
-        return notFound()
-    }
-  },
-};
+export default app
